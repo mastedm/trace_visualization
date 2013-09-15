@@ -1,0 +1,5 @@
+#!/usr/bin/env ruby
+
+require 'trace_visualization'
+
+puts 'Trace Visualization!'
