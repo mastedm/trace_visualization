@@ -34,14 +34,36 @@ describe TraceVisualization::BurrowsWheelerTransform do
   end
   
   it "test with mapping" do
-    str = "127.0.0.1 a 127.0.0.1 b"
-    arr = TraceVisualization::Mapping.parse(str)
-    ip, ws, a, b = arr[0], arr[1], arr[2], arr[6]
+    str = "127.0.0.1 a 127.0.0.1 b" + TraceVisualization::TERMINATION_CHAR
     
-    bwt     = TraceVisualization::BurrowsWheelerTransform.bwt(arr, TraceVisualization::SuffixArray.effective(arr), arr.length)
-    bwt_str = TraceVisualization::Mapping.restore(bwt)
+    mapped_str = TraceVisualization::Mapping.init do
+      default_tokens
+    end
+    
+    mapped_str.process { from_string str }
+    
+    ip, ws, a, b = mapped_str[0], mapped_str[1], mapped_str[2], mapped_str[6]
 
-    bwt.should     eq [ip, ip, a, ws, ws, b, ws]
-    bwt_str.should eq "127.0.0.1127.0.0.1a  b "
+    ip.to_str.should eq "127.0.0.1"
+    ws.to_str.should eq " "
+    a.to_str.should eq "a"
+    b.to_str.should eq "b" 
+    
+    puts "ip.ord = #{ip.ord}, ws.ord = #{ws.ord}, a = #{a.ord}, b = #{b.ord}"
+    
+    sa = TraceVisualization::SuffixArray.effective(mapped_str)
+    
+    (sa.length == mapped_str.length).should be_true
+
+    bwt     = TraceVisualization::BurrowsWheelerTransform.bwt(mapped_str, sa, mapped_str.length)
+    bwt_str = bwt.inject("") { |res, c| res += c.to_str }
+
+    if ip < ws
+      bwt.should     eq [ip, ip, a, ws, ws, b, ws]
+      bwt_str.should eq "127.0.0.1127.0.0.1a  b "
+    else
+      sadasfa 
+    end
   end
+  
 end

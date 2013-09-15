@@ -10,7 +10,7 @@ module TraceVisualization
       lcp = TraceVisualization::LongestCommonPrefix.effective(str, sa, str.size)
       bwt = TraceVisualization::BurrowsWheelerTransform.bwt(str, sa, str.length)
       
-      result = psy1_original(lcp, bwt, 3, str.length)
+      result = psy1_original(lcp, bwt, p_min, str.length)
       result = decode_psy1_result(result, sa) if decode_result
       
       result

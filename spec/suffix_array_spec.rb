@@ -11,9 +11,9 @@ describe TraceVisualization::SuffixArray do
     
     it "should correct process mapped string" do
       str = "abc[123]def[456]ghi"
-      arr = TraceVisualization::Mapping.parse(str)
+      mapped_str = TraceVisualization::Mapping.new(str)
       
-      TraceVisualization::SuffixArray.naive(arr).should eq([0, 1, 2, 4, 5, 6, 8, 9, 10, 3, 7])
+      TraceVisualization::SuffixArray.naive(mapped_str).should eq([0, 1, 2, 4, 5, 6, 8, 9, 10, 3, 7])
     end
   end
   
@@ -51,18 +51,40 @@ describe TraceVisualization::SuffixArray do
     
     it "should correct process mapped string" do
       str = "abc[123]def[456]ghi"
-      arr = TraceVisualization::Mapping.parse(str)
+      mapped_str = TraceVisualization::Mapping.new(str)
       
-      TraceVisualization::SuffixArray.effective(arr).should eq([0, 1, 2, 4, 5, 6, 8, 9, 10, 3, 7])
+      TraceVisualization::SuffixArray.effective(mapped_str).should eq([0, 1, 2, 4, 5, 6, 8, 9, 10, 3, 7])
+    end
+    
+    it "another string for mapped processing" do
+      str = "127.0.0.1 a 127.0.0.1 b"
+      
+      # 'X a X b'
+      mapped_str = TraceVisualization::Mapping.new(str)
+      
+      mapped_str[0].to_int.should eq 4
+      mapped_str[1].to_int.should eq 1
+      mapped_str[2].to_int.should eq 2
+      mapped_str[3].to_int.should eq 1
+      mapped_str[4].to_int.should eq 4
+      mapped_str[5].to_int.should eq 1
+      mapped_str[6].to_int.should eq 3      
+
+      length_before = mapped_str.length
+      
+      sa = TraceVisualization::SuffixArray.effective(mapped_str)
+      mapped_str.length.should be length_before
+
+      sa.should eq [1, 5, 3, 2, 6, 0, 4]
+      sa.length.should be mapped_str.length
     end
     
     it "bug with endless loop" do
       str = "127.0.0.1 user login\r\n127.0.0.1 user logout"
-      arr = TraceVisualization::Mapping.parse(str)
+      mapped_str = TraceVisualization::Mapping.new(str)
       
-      sa = TraceVisualization::SuffixArray.effective(arr)      
-    end
-    
+      sa = TraceVisualization::SuffixArray.effective(mapped_str)      
+    end    
   end
   
 end

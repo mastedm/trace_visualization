@@ -27,6 +27,8 @@ module TraceVisualization
         str.each_char { |c| s << c.ord }
       elsif str.instance_of? Array
         str.each { |c| s << c.ord }
+      else
+        s = str
       end
 
       3.times { s << 0 }
@@ -34,6 +36,8 @@ module TraceVisualization
       suffix_array = Array.new(n + 3, 0)
 
       effective_linear(s, suffix_array, n, s.max + 1)
+
+      3.times { s.pop }
 
       suffix_array[0 ... -3]
     end

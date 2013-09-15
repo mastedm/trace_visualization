@@ -16,16 +16,16 @@ describe TraceVisualization::Repetitions do
   
   it 'simple test PSY1 with mapping' do
     str = "aaa[123]aaa"
-    arr = TraceVisualization::Mapping.parse(str)
+    mapped_str = TraceVisualization::Mapping.new(str)
     
-    TraceVisualization::Repetitions.psy1(arr, 3, false).should eq [{:lcp=>3, :i=>2, :j=>3}]
+    TraceVisualization::Repetitions.psy1(mapped_str, 3, false).should eq [{:lcp=>3, :i=>2, :j=>3}]
   end
   
   it 'test decode PSY1' do
     str = "aaa[123]xyz[654]aaa[123]" # <---> "aaaXxyzYaaaX"
-    arr = TraceVisualization::Mapping.parse(str)
+    mapped_str = TraceVisualization::Mapping.new(str)
     
-    rs = TraceVisualization::Repetitions.psy1(arr, 3)
+    rs = TraceVisualization::Repetitions.psy1(mapped_str, 3)
     
     rs.size.should eq 1
     rs[0].length.should eq 4
@@ -34,6 +34,6 @@ describe TraceVisualization::Repetitions do
     length   = rs[0].length
     position = rs[0].left_positions[0]
     
-    TraceVisualization::Mapping.restore(arr[position ... position + length]).should eq "aaa[123]"    
+    mapped_str.restore(position, length).should eq "aaa[123]"    
   end
 end

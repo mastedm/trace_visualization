@@ -1,6 +1,6 @@
-require 'travis/data/repetition'
+require 'trace_visualization/data/repetition'
 
-module Travis
+module TraceVisualization
   module Visualization
     module ConsoleColorPrint
       
@@ -9,6 +9,8 @@ module Travis
       FNSH = "\033[0m"
       
       def self.hl(str, repetition)
+        raise "repetition must be instance of TraceVisualization::Data::Repetition" if not repetition.instance_of? TraceVisualization::Data::Repetition
+        
         result = ""
         prev_position = 0
         positions = repetition.build_positions

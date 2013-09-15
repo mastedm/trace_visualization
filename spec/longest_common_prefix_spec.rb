@@ -16,10 +16,10 @@ describe TraceVisualization::LongestCommonPrefix do
     
     it 'should return correct result for mapped string', :current => true do
       str = "127.0.0.1 foo\r\n127.0.0.1 bar"
-      arr = TraceVisualization::Mapping.parse(str)
+      mapped_str = TraceVisualization::Mapping.new(str)
       
-      sa = TraceVisualization::SuffixArray.effective(arr)
-      lcp = TraceVisualization::LongestCommonPrefix.effective(arr, sa, arr.size)
+      sa = TraceVisualization::SuffixArray.effective(mapped_str)
+      lcp = TraceVisualization::LongestCommonPrefix.effective(mapped_str, sa, mapped_str.length)
 
       sa.should eq([6, 5, 8, 1, 10, 9, 2, 4, 3, 11, 7, 0])
       lcp.should eq([0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 2])
