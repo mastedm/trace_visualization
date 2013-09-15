@@ -36,7 +36,8 @@ unit_tests_run: unit_tests
 	./unit_tests	
 
 install: preprocessor
-	cp preprocessor ../../../bin/
+	ls -ls
+	cp preprocessor ../../bin/
 	make clean
 
 clean: 
