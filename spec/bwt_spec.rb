@@ -48,9 +48,7 @@ describe TraceVisualization::BurrowsWheelerTransform do
     ws.to_str.should eq " "
     a.to_str.should eq "a"
     b.to_str.should eq "b" 
-    
-    puts "ip.ord = #{ip.ord}, ws.ord = #{ws.ord}, a = #{a.ord}, b = #{b.ord}"
-    
+
     sa = TraceVisualization::SuffixArray.effective(mapped_str)
     
     (sa.length == mapped_str.length).should be_true
@@ -60,9 +58,9 @@ describe TraceVisualization::BurrowsWheelerTransform do
 
     if ip < ws
       bwt.should     eq [ip, ip, a, ws, ws, b, ws]
-      bwt_str.should eq "127.0.0.1127.0.0.1a  b "
+      bwt_str.should eq '127.0.0.1127.0.0.1a  b '
     else
-      sadasfa 
+      # TODO Implement!
     end
   end
   

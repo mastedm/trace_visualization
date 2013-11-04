@@ -1,3 +1,5 @@
+require 'trace_visualization'
+
 module TraceVisualization
   module Reorder
 

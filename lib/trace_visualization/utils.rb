@@ -10,7 +10,7 @@ module TraceVisualization
     
     # Get the start position of lines
     def self.lines_pos(str)
-      TraceVisualization.assert_instance_of(str, String)
+      TraceVisualization.assert_instance_of(str, Mapping)
       
       lines_pos = [0]
       pos = -1

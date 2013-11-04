@@ -1,5 +1,143 @@
 #!/usr/bin/env ruby
 
 require 'trace_visualization'
+require 'tempfile'
+require 'benchmark'
+require 'optparse'
 
-puts 'Trace Visualization!'
+GEM_PATH = $:.grep(%r{trace_visualization-\d+\.\d+\.\d+\/lib$})[0] + '/..'
+
+include TraceVisualization
+
+##
+# Parse command line options
+def parse_options
+  options = {}
+
+  optionParser = OptionParser.new do|opts|
+    opts.banner = "Usage: trace_visualization [options] file"
+
+    #options[:limit] = nil
+    #opts.on( '-l', '--limit N', 'Number of characters from file' ) do |n|
+    #  options[:limit] = n.to_i
+    #end
+    #
+    #options[:nlines] = 20
+    #opts.on('-n', '--nlines N', "Number of lines (default #{options[:nlines]})") do |n|
+    #  options[:nlines] = n.to_i
+    #end
+    #
+    #options[:k] = 10
+    #opts.on( '-k', '--k_max N', 'k value' ) do |k|
+    #  options[:k] = k.to_i
+    #end
+    #
+    #options[:s] = 5
+    #opts.on( '-s', '--strict_length N', 'Length of strict repetition' ) do |s|
+    #  options[:s] = s.to_i
+    #end
+    #
+
+    options[:offset] = 0
+    opts.on('-x', '--offset N', 'Number of lines for offset. Default 0') do |n|
+      options[:offset] = n.to_i
+    end
+
+    options[:limit] = 2**32
+    opts.on('-l', '--limit N', "Number of lines. Default #{options[:limit]}") do |n|
+      options[:limit] = n.to_i
+    end
+
+    options[:out] = 3
+    opts.on('-o', '--out N', 'Number of output results') do |n|
+      options[:out] = n.to_i
+    end
+
+    options[:positions_min_size] = 3
+    opts.on('-m', '--positions_min_size N', "The minimum number of repetition positions. Default #{options[:positions_min_size]}") do |s|
+      options[:positions_min_size] = s.to_i
+    end
+
+    options[:test_preprocessor_performance] = false
+    opts.on('-t', '--test_preprocessor_performance', 'Test preprocessor performance') do
+      options[:test_preprocessor_performance] = true
+    end
+
+    opts.on('-h', '--help', 'Display this screen') do
+      puts opts
+      exit
+    end
+  end
+
+  optionParser.parse!
+
+  options[:source_file_name] = ARGV[0]
+
+  options
+end
+
+def foo(options)
+  tmp_file = Tempfile.new('trace_visualization')
+
+  bm('Preprocessor') do
+    `#{GEM_PATH}/bin/preprocessor_gen < #{options[:source_file_name]} > #{tmp_file.path}`
+  end
+
+  mapping = nil
+  bm('Mapping') do
+    mapping = TraceVisualization::Mapping.new
+    mapping.process_without_reorder { from_preprocessed_file(tmp_file.path, options[:offset], options[:limit], !options[:test_preprocessor_performance]) }
+  end
+
+  source_file_length = `wc -c #{options[:source_file_name]}`.to_i
+  tmp_file_length = tmp_file.length
+
+  puts "source_file_length = #{source_file_length}"
+  puts "tmp_file_length    = #{tmp_file_length} (+#{((tmp_file_length - source_file_length) * 100.0 / source_file_length).round(2)}%)"
+  puts "mapping_length     = #{mapping.length} (-#{((source_file_length - mapping.length) * 100.0 / source_file_length).round(2)}%)"
+
+  tmp_file.close
+  tmp_file.unlink
+
+  if options[:test_preprocessor_performance]
+    puts "Finish preprocessor"
+    exit 0
+  end
+
+  rs = nil
+  bm('PSY1') do
+    rs = Repetitions.psy1(mapping, options[:positions_min_size], true)
+  end
+
+  puts "rs.size = #{rs.size}"
+
+  #context = nil
+  #bm('Context') do
+  #  context = TraceVisualization::Repetitions::Context.new(mapping, rs)
+  #end
+
+  RepetitionsScore.fill_score(rs, :sort => true, :order => 'desc', :version => 'relative')
+
+  rs[0 ... options[:out]].each do |r|
+    puts '---------------------'
+    puts r
+    puts Visualization::ConsoleColorPrint.hl(mapping, r)
+  end
+
+  rs
+end
+
+
+def bm(name, &block)
+  Benchmark.bm(17) do |x|
+    x.report(name, &block)
+  end
+end
+
+
+options = parse_options
+rs = foo(options)
+
+
+
+

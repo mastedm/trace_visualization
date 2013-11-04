@@ -5,8 +5,14 @@ require 'trace_visualization/data/repetition'
 describe TraceVisualization::RepetitionsConcatenation do
   it "process common positions" do
     str = "aaaxbbbyaaazbbbvaaawbbb"
-    
-    context = TraceVisualization::Repetitions::Context.new(str, [])
+
+    mapping = TraceVisualization::Mapping.init do
+      default_tokens
+    end
+
+    mapping.process { from_string(str) }
+
+    context = TraceVisualization::Repetitions::Context.new(mapping, [])
     
     lpos = [0, 8, 16]
     rpos = [4, 12, 20]
