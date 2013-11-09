@@ -25,8 +25,8 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'bundler', '~> 1.3'
   spec.add_development_dependency 'rake'
   
-  spec.add_development_dependency 'redcarpet', '~> 1.17'
-  spec.add_development_dependency 'yard', '~> 0.7.5'
+  spec.add_development_dependency 'redcarpet'
+  spec.add_development_dependency 'yard', "~> 0.8.7.3"
   
   spec.add_development_dependency 'rspec-core', '~> 2.0'
   spec.add_development_dependency 'rspec-expectations', '~> 2.0'
