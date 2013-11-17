@@ -31,12 +31,13 @@ module TraceVisualization
     end
 
     # Load data from preprocessed file. File is read line by line
-    def from_preprocessed_file(path, offset, limit, use_lexeme_table = true)
+    def from_preprocessed_file(path, offset = 0, limit = 2**32, use_lexeme_table = true)
       validate_file_name_argument(path)
 
       idx = 0
       open(path) do |fd|
         while (line = fd.gets)
+          line.chomp!
           if idx >= offset && idx < offset + limit
             process_preprocessed_line(line, use_lexeme_table) 
           elsif idx >= offset + limit

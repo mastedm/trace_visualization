@@ -6,11 +6,8 @@ describe TraceVisualization::RepetitionsConcatenation do
   it "process common positions" do
     str = "aaaxbbbyaaazbbbvaaawbbb"
 
-    mapping = TraceVisualization::Mapping.init do
-      default_tokens
-    end
-
-    mapping.process { from_string(str) }
+    mapping = TraceVisualization::Mapping.new
+    mapping.process { from_preprocessed_string(str) }
 
     context = TraceVisualization::Repetitions::Context.new(mapping, [])
     
