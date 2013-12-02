@@ -1,22 +1,18 @@
+require 'trace_visualization'
 require 'trace_visualization/utils'
 
 require 'tempfile'
 
-describe TraceVisualization::Utils do
-  it "lines pos" do
-    str = "qwerty\r\nqwerty\r\nqwerty"
-    lines_pos = TraceVisualization::Utils.lines_pos(str)
-    
-    lines_pos.should eq [0, 8, 16]    
-  end
-  
+include TraceVisualization
+
+describe Utils do
   it "read file test" do
     file = Tempfile.new('trace_visualization_test')
     begin
       file.write("first line\r\nsecond line\r\nthird line")
       file.close
       
-      str = TraceVisualization::Utils.read_file({
+      str = Utils.read_file({
         :file_name => file.path,
         :n_lines => 2
       })
@@ -26,5 +22,21 @@ describe TraceVisualization::Utils do
       file.close
       file.unlink
     end
+  end
+  
+  it 'correctly process set_default_options' do
+    default = { :offset => 0, :limit => 100 }
+
+    options = {}
+    Utils.set_default_options(options, default)
+    options.should eq ({ :offset => 0, :limit => 100 })
+    
+    options = { :offset => 100 }
+    Utils.set_default_options(options, default)
+    options.should eq ({ :offset => 100, :limit => 100 })
+    
+    options = { :limit => 100, :qty => 42 }
+    Utils.set_default_options(options, default)
+    options.should eq ({ :offset => 0, :limit => 100, :qty => 42 })
   end
 end

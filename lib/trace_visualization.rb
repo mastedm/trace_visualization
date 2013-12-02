@@ -5,7 +5,7 @@
   reorder
   repetitions
   repetitions_psy
-  repetitions_context
+  repetitions/context
   repetitions_score
   visualization/console_color_print
 ).each { |file| require File.join(File.dirname(__FILE__), 'trace_visualization', file) }

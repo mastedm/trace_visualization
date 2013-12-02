@@ -1,3 +1,7 @@
+require 'trace_visualization/data/sorted_array'
+
+include TraceVisualization::Data
+
 # Interface for Repetition 
 module IRepetition
   def positions_size; end
@@ -31,7 +35,7 @@ class RepetitionBase
   attr_accessor :lines
 
   def initialize
-    @lines = []
+    @lines = SortedArray.new
   end
   
   def left_length

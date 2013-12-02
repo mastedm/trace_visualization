@@ -15,15 +15,10 @@ describe TraceVisualization::LongestCommonPrefix do
     end
     
     it 'should return correct result for mapped string', :current => true do
-      str = "127.0.0.1 foo\r\n127.0.0.1 bar"
+      str = "{TOKEN;ip;127.0.0.1;1000;1} foo\r\n{TOKEN;ip;127.0.0.1;1000;1} bar"
 
-      mapping = TraceVisualization::Mapping.init do
-        default_tokens
-      end
-
-      mapping.process do
-        from_string(str)
-      end
+      mapping = TraceVisualization::Mapping.new
+      mapping.process { from_preprocessed_string(str) }
       
       sa = TraceVisualization::SuffixArray.effective(mapping)
       lcp = TraceVisualization::LongestCommonPrefix.effective(mapping, sa, mapping.length)

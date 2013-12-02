@@ -1,99 +1,55 @@
 require 'trace_visualization'
 require 'trace_visualization/mapping'
+require 'tempfile'
 
 include TraceVisualization
 include TraceVisualization::Data
 
-describe TraceVisualization::Mapping do
+describe Mapping do
   it 'simple id values' do
-    str = "foo[1234]bar[1235]far[1234]\n"
+    str = "foo{TOKEN;id;1234;1234;1}bar{TOKEN;id;1235;1235;1}far{TOKEN;id;1234;1234;1}"
     
-    mapping = TraceVisualization::Mapping.init do
-      default_tokens
-    end 
+    mapping = Mapping.new
     
     mapping.process do
-      from_string(str)
+      from_preprocessed_string(str)
     end
     
-    mapping.length.should eq 13
+    mapping.length.should eq 12
     
-    ids = mapping.find_all { |lexeme| lexeme.name == :ID }
+    ids = mapping.find_all { |lexeme| lexeme.name == :id }
     ids.size.should eq(3)
-    ids[0].value.should eq("[1234]")
-    ids[1].value.should eq("[1235]")
-    ids[2].value.should eq("[1234]")
-    ids[0].should eq(ids[2])
-    
-    mapping.restore.should eq str
+    ids[0].value.should eq("1234")
+    ids[1].value.should eq("1235")
+    ids[2].value.should eq("1234")
+    ids[0].should eq(ids[2])    
   end
   
   it 'ip values' do
-    str = "user1 ip : 127.0.0.1 \r\nuser2 ip : 127.0.0.2\r\n"
+    str = "user1 ip: {TOKEN;ip;127.0.0.1;123;1} \nuser2 ip: {TOKEN;ip;127.0.0.2;122;1}"
     
-    mapping = TraceVisualization::Mapping.init do
-      default_tokens
-    end 
+    mapping = Mapping.new
     
     mapping.process do
-      from_string(str)
+      from_preprocessed_string(str)
     end
     
-    mapping.length.should eq 29
+    mapping.length.should eq 24
     
-    ips = mapping.find_all { |lexeme| lexeme.name == :IP }
+    ips = mapping.find_all { |lexeme| lexeme.name == :ip }
     ips.size.should eq(2)
     ips[0].value.should eq("127.0.0.1")
     ips[1].value.should eq("127.0.0.2")
-    
-    mapping.restore.should eq str
-  end
-  
-  it 'compare different types' do
-    mapping = TraceVisualization::Mapping.init do
-      default_tokens
-    end
-    
-    mapping.tokens.should_not be_nil
-    mapping.tokens[:ID].should_not be_nil
-    mapping.tokens[:IP].should_not be_nil
-    mapping.tokens[:TIME].should_not be_nil
-    
-    # Ids
-    id_1 = Lexeme.new(:ID, "[12345678]", mapping.tokens[:ID][1].call("[12345678]"))
-    id_2 = Lexeme.new(:ID, "[12345679]", mapping.tokens[:ID][1].call("[12345679]"))
-    Reorder.process([id_1, id_2])
-    
-    id_1.should be < id_2
-    
-    # IPs
-    ip_1 = Lexeme.new(:IP, "127.0.0.1", mapping.tokens[:IP][1].call("127.0.0.1"))
-    ip_2 = Lexeme.new(:IP, "127.0.0.2", mapping.tokens[:IP][1].call("127.0.0.2"))
-    Reorder.process([ip_1, ip_2])
-    
-    ip_1.should be < ip_2
-
-    # Time
-    time_1 = Lexeme.new(:TIME, '[16 Jan 2013 00:10:00]', mapping.tokens[:TIME][1].call('[16 Jan 2013 00:10:00]'))
-    time_2 = Lexeme.new(:TIME, '[16 Jan 2013 00:10:01]', mapping.tokens[:TIME][1].call('[16 Jan 2013 00:10:01]'))
-    Reorder.process([time_1, time_2])
-
-    # Different
-    Reorder.process([time_1, time_2, id_1, ip_1])        
-
-    time_1.should be < time_2
-    id_1.should be < ip_1
-    id_1.should be < time_1
   end
   
   it 'Lexeme to_i conversion' do
-    lexeme = TraceVisualization::Data::Lexeme.new('unknown', 0, 0)
+    lexeme = Data::Lexeme.new('unknown', 0, 0)
     lexeme.ord = 0
     lexeme.to_i.should eq 0
   end
   
   it 'item as array index' do
-    lexeme = TraceVisualization::Data::Lexeme.new('unknown', 0, 0)
+    lexeme = Data::Lexeme.new('unknown', 0, 0)
     lexeme.ord = 1
     array = [0, 1, 2]
     
@@ -101,13 +57,60 @@ describe TraceVisualization::Mapping do
   end
 
   it 'preprocessed string' do
-    str = 'Text {LEXEME;ID;[1234];1234} text {LEXEME;IP;127.0.0.127;1} text'
+    str = 'Text {TOKEN;id;[1234];1234;1} text {TOKEN;ip;127.0.0.127;1;1} text'
     
-    mapping = TraceVisualization::Mapping.new
-    mapping.process do
-      from_preprocessed_string str
-    end
+    mapping = Mapping.new
+    mapping.process { from_preprocessed_string str }
     
-    mapping.size.should eq 19
+    mapping.size.should eq 18
+  end
+  
+  it 'Mapping.lines should contains positions of lines (from string)' do
+    str = "{TOKEN;id;1;1;1}x\n{TOKEN;id;1;1;1}y\n{TOKEN;id;1;1;1}z"
+    
+    mapping = Mapping.new
+    mapping.process { from_preprocessed_string str }
+    
+    mapping.size.should eq 8
+    mapping.lines.should eq [0, 3, 6]    
+  end
+  
+  it 'Mapping.lines should contains positions of lines (from file)' do
+    data = <<-DATA
+line1
+line2
+line3
+DATA
+    
+    tmp_file = Tempfile.new('trace_visualization')
+    open(tmp_file.path, "w") { |fd| fd.write data }
+    
+    mapping = Mapping.new
+    mapping.process { from_preprocessed_file tmp_file.path }
+
+    tmp_file.close
+    tmp_file.unlink
+    
+    mapping.lines.should eq [0, 6, 12]
+  end
+  
+  it 'subarray method for mapping' do
+    mapping = Mapping.new
+    mapping.process { from_preprocessed_string "test test test" }
+    
+    submapping = mapping[5 ... 9]
+    submapping.size.should eq 4
+    submapping.join.should eq "test"
+    
+    mapping[0 .. -1].join.should eq "test test test"
+  end
+  
+  it 'forbidden char scan' do
+    mapping = Mapping.new
+    mapping.process { from_preprocessed_string "test test test" }
+    mapping[0 .. -1].join.scan(TraceVisualization::FORBIDDEN_CHARS).size.should eq 0
+    
+    mapping.process { from_preprocessed_string "test\ntest\ntest" }
+    mapping[0 .. -1].join.scan(TraceVisualization::FORBIDDEN_CHARS).size.should_not eq 0
   end
 end

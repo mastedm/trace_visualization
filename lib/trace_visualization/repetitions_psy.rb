@@ -5,12 +5,19 @@ require 'trace_visualization/data/repetition'
 
 module TraceVisualization
   module Repetitions
-    def self.psy1(str, p_min, decode_result = true)
-      sa  = TraceVisualization::SuffixArray.effective(str)
-      lcp = TraceVisualization::LongestCommonPrefix.effective(str, sa, str.size)
-      bwt = TraceVisualization::BurrowsWheelerTransform.bwt(str, sa, str.length)
+    
+    # Computes all the complete nonextendible repeats using PSY1 algorithm
+    # @param data [Array] Array of objects
+    # @param p_min [Integer] The minimum number of positions in which we have repetition
+    # @param decode_result [Boolean]
+    def self.psy1(data, p_min, decode_result = true)
+      raise ArgumentError, 'Data is empty' if data == nil || data.size == 0
       
-      result = psy1_original(lcp, bwt, p_min, str.length)
+      sa  = TraceVisualization::SuffixArray.effective(data)
+      lcp = TraceVisualization::LongestCommonPrefix.effective(data, sa, data.size)
+      bwt = TraceVisualization::BurrowsWheelerTransform.bwt(data, sa, data.size)
+      
+      result = psy1_original(lcp, bwt, p_min, data.length)
       result = decode_psy1_result(result, sa) if decode_result
       
       result

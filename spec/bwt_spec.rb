@@ -34,13 +34,10 @@ describe TraceVisualization::BurrowsWheelerTransform do
   end
   
   it "test with mapping" do
-    str = "127.0.0.1 a 127.0.0.1 b" + TraceVisualization::TERMINATION_CHAR
+    str = "{TOKEN;ip;127.0.0.1;123;1} a {TOKEN;ip;127.0.0.1;123;1} b" + TraceVisualization::TERMINATION_CHAR
     
-    mapped_str = TraceVisualization::Mapping.init do
-      default_tokens
-    end
-    
-    mapped_str.process { from_string str }
+    mapped_str = TraceVisualization::Mapping.new    
+    mapped_str.process { from_preprocessed_string str }
     
     ip, ws, a, b = mapped_str[0], mapped_str[1], mapped_str[2], mapped_str[6]
 

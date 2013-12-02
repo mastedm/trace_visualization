@@ -14,29 +14,20 @@ describe TraceVisualization::Repetitions do
   end
   
   it 'simple test PSY1 with mapping' do
-    str = 'aaa[123]aaa'
+    str = 'aaa{TOKEN;id;[123];123;1}aaa'
 
-    mapping = TraceVisualization::Mapping.init do
-      default_tokens
-    end
-
-    mapping.process do
-      from_string(str)
-    end
+    mapping = TraceVisualization::Mapping.new
+    mapping.process { from_preprocessed_string str }
     
     TraceVisualization::Repetitions.psy1(mapping, 3, false).should eq [{:lcp=>3, :i=>2, :j=>3}]
   end
   
   it 'test decode PSY1' do
-    str = "aaa[123]xyz[654]aaa[123]" # <---> "aaaXxyzYaaaX"
+    # <---> "aaaXxyzYaaaX"
+    str = "aaa{TOKEN;id;[123];123;1}xyz{TOKEN;id;[654];654;1}aaa{TOKEN;id;[123];123;1}" 
 
-    mapping = TraceVisualization::Mapping.init do
-      default_tokens
-    end
-
-    mapping.process do
-      from_string(str)
-    end
+    mapping = TraceVisualization::Mapping.new
+    mapping.process { from_preprocessed_string str }
     
     rs = TraceVisualization::Repetitions.psy1(mapping, 3)
     

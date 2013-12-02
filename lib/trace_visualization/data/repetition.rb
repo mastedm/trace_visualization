@@ -23,7 +23,7 @@ module TraceVisualization
         "left = #{@left != nil ? @left.id : 'nil'}, " +
         "right = #{@right != nil ? @right.id : 'nil'}"
       end
-  
+
       def initialize(length, left_positions, right_positions = nil)
         super()
     
@@ -35,10 +35,15 @@ module TraceVisualization
         @right_positions = right_positions 
     
         @id = (@@sequence += 1)
-        @strict_ids = [@id]
-        @lines = []
+        @strict_ids = [ @id ]
       end
   
+      def ==(other_repetition)
+        @length == other_repetition.length && 
+          @left_positions == other_repetition.left_positions && 
+          @right_positions == other_repetition.right_positions
+      end
+
       def positions_size
         @left_positions.size
       end

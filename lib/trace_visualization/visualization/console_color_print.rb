@@ -16,18 +16,18 @@ module TraceVisualization
         positions = repetition.build_positions
     
         positions.each do |position|
-          result += mapping.restore(prev_position, position[0][0])
+          result += mapping.restore(prev_position, position[0][0] - prev_position)
       
           for i in 0 ... position.size
             pos, len = position[i]
-            result += GRN + "#{mapping.restore(pos, pos + len)}" + FINISH
-            result += YLW + "#{mapping.restore(pos + len, position[i + 1][0])}" + FINISH if i < position.size - 1
+            result += GRN + "#{mapping.restore(pos, len)}" + FINISH
+            result += YLW + "#{mapping.restore(pos + len, position[i + 1][0] - (pos + len))}" + FINISH if i < position.size - 1
           end
       
           prev_position = position[-1][0] + position[-1][1]
         end
     
-        result += mapping.restore(prev_position, -1)
+        result += mapping.restore(prev_position, mapping.length - prev_position)
       end
     end
   end
