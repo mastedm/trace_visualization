@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 
 require 'trace_visualization'
+require 'trace_preprocessor'
 require 'tempfile'
 require 'benchmark'
 require 'optparse'
@@ -39,6 +40,11 @@ def parse_options
     opts.on('-t', '--test_preprocessor_performance', 'Test preprocessor performance') do
       options[:test_preprocessor_performance] = true
     end
+    
+    opts.on('-v', '--version', 'Display version') do
+      puts "Version #{VERSION}"
+      exit
+    end
 
     opts.on('-h', '--help', 'Display this screen') do
       puts opts
@@ -75,8 +81,10 @@ def foo(options)
   
   mapping = nil
   bm('Mapping') do
-    mapping = TraceVisualization::Mapping.new
-    mapping.process_without_reorder { from_preprocessed_file(tmp_file.path, options[:offset], options[:limit], !options[:test_preprocessor_performance]) }
+    mapping = Mapping.new
+    mapping.process do
+      from_preprocessed_file(tmp_file.path, options[:offset], options[:limit], !options[:test_preprocessor_performance])
+    end
   end
 
   source_file_length = `wc -c #{options[:source_file_name]}`.to_i
@@ -101,18 +109,20 @@ def foo(options)
 
   puts "rs.size = #{rs.size}"
 
-  #context = nil
-  #bm('Context') do
-  #  context = TraceVisualization::Repetitions::Context.new(mapping, rs)
-  #end
+  puts "mapping.lines = #{mapping.lines}"
 
-  RepetitionsScore.fill_score(rs, :sort => true, :order => 'desc', :version => 'relative')
-
-  rs[0 ... options[:out]].each do |r|
-    puts '---------------------'
-    puts r
-    puts Visualization::ConsoleColorPrint.hl(mapping, r)
+  context = nil
+  bm('Context') do
+    context = Repetitions::Context.new(mapping, rs)
   end
+
+  # RepetitionsScore.fill_score(rs, :sort => true, :order => 'desc', :version => 'relative')
+  # 
+  # rs[0 ... options[:out]].each do |r|
+  #   puts '---------------------'
+  #   puts r
+  #   puts Visualization::ConsoleColorPrint.hl(mapping, r)
+  # end
 
   rs
 end
@@ -127,7 +137,3 @@ end
 
 options = parse_options
 rs = foo(options)
-
-
-
-
