@@ -17,7 +17,7 @@ describe TraceVisualization::Repetitions do
     str = 'aaa{TOKEN;id;[123];123;1}aaa'
 
     mapping = TraceVisualization::Mapping.new
-    mapping.process { from_preprocessed_string str }
+    mapping.process { from_string str }
     
     TraceVisualization::Repetitions.psy1(mapping, 3, false).should eq [{:lcp=>3, :i=>2, :j=>3}]
   end
@@ -27,7 +27,7 @@ describe TraceVisualization::Repetitions do
     str = "aaa{TOKEN;id;[123];123;1}xyz{TOKEN;id;[654];654;1}aaa{TOKEN;id;[123];123;1}" 
 
     mapping = TraceVisualization::Mapping.new
-    mapping.process { from_preprocessed_string str }
+    mapping.process { from_string str }
     
     rs = TraceVisualization::Repetitions.psy1(mapping, 3)
     

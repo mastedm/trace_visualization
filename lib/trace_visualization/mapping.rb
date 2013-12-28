@@ -3,7 +3,9 @@ require 'ipaddr'
 
 require 'trace_visualization/reorder'
 require 'trace_visualization/lexeme_overlap_filter'
-require 'trace_visualization/data/lexeme'
+require 'trace_visualization/data/token'
+
+include TraceVisualization
 
 module TraceVisualization
   class Mapping
@@ -21,17 +23,19 @@ module TraceVisualization
       mapping
     end
     
+    # Process input data with reorder
     def process(&block)
       instance_eval(&block)
-      @max_value = TraceVisualization::Reorder.process(@data)
+      @max_value = Reorder.process(@data)
     end
 
+    # Process input data without reorder
     def process_without_reorder(&block)
       instance_eval(&block)
     end
 
     # Load data from preprocessed file. File is read line by line
-    def from_preprocessed_file(path, offset = 0, limit = 2**32, use_lexeme_table = true)
+    def from_file(path, offset = 0, limit = 2**32, use_lexeme_table = true)
       validate_file_name_argument(path)
 
       idx = 0
@@ -39,7 +43,7 @@ module TraceVisualization
         while (line = fd.gets)
           line.chomp!
           if idx >= offset && idx < offset + limit
-            process_preprocessed_line(line, use_lexeme_table) 
+            process_line(line, use_lexeme_table) 
           elsif idx >= offset + limit
             break
           end
@@ -51,60 +55,62 @@ module TraceVisualization
       @data.pop
     end
 
-    def from_preprocessed_string(str, use_lexeme_table = true)
+    # Load data from string
+    def from_string(str, use_lexeme_table = true)
       validate_string_argument(str)
 
       str.split("\n").each do |line|
-        process_preprocessed_line(line)
+        process_line(line)
       end
       
       @data.pop
     end
     
-    def process_preprocessed_line(line, use_lexeme_table = true)
+    # Process line
+    def process_line(line, use_lexeme_table = true)
       @lines << @data.length
       
-      lexeme_positions = []
+      token_positions = []
       pos = 0
       while (m = TOKEN_REGEXP.match(line, pos))
         pos = m.begin(0)
 
-        lexeme = install_token_m(m, use_lexeme_table)
-        lexeme_positions << TraceVisualization::Data::LexemePos.new(lexeme, pos)
+        token = install_token_m(m, use_lexeme_table)
+        token_positions << Data::TokenPosition.new(token, pos)
 
-        pos += lexeme.lexeme_length
+        pos += token.token_length
       end
 
 
       pos, idx = 0, 0
       while pos < line.length
-        lexeme = nil
-        if idx < lexeme_positions.size && lexeme_positions[idx].pos == pos
-          lexeme = lexeme_positions[idx].lexeme
+        token = nil
+        if idx < token_positions.size && token_positions[idx].pos == pos
+          token = token_positions[idx].token
           idx += 1
         else
-          lexeme = install_token('CHAR', line[pos], line[pos].ord, 1, use_lexeme_table)
+          token = install_token('CHAR', line[pos], line[pos].ord, 1, use_lexeme_table)
         end
-        pos += lexeme.lexeme_length
-        @data << lexeme
+        pos += token.token_length
+        @data << token
       end
       
       @data << install_lf_token
     end
     
-    def install_token(name, lexeme_string, int_value, lexeme_length, use_lexeme_table = true)
+    def install_token(name, token_string, int_value, token_length, use_token_table = true)
       name = name.intern
       
-      lexeme = use_lexeme_table ? @tokens_map[lexeme_string] : nil
+      token = use_token_table ? @tokens_map[token_string] : nil
       
-      if lexeme.nil?
-        lexeme = TraceVisualization::Data::Lexeme.new(name, lexeme_string, int_value)
-        lexeme.lexeme_length = lexeme_length
+      if token.nil?
+        token = Data::Token.new(name, token_string, int_value)
+        token.token_length = token_length
 
-        @tokens_map[lexeme_string] = lexeme if use_lexeme_table
+        @tokens_map[token_string] = token if use_token_table
       end
       
-      lexeme
+      token
     end
 
     def install_token_m(m, use_lexeme_table = true)

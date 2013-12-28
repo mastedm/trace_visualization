@@ -1,10 +1,10 @@
 module TraceVisualization
   module LexemeOverlapFilter
     
-    def self.process(lexeme_poss)
-      lexeme_poss.sort! { |a, b| a.pos <=> b.pos }
-      left_bound = lexeme_poss.inject(0) do |left_bound, lexeme_pos| 
-        [lexeme_pos.pos + lexeme_pos.lexeme.length, left_bound].max 
+    def self.process(token_positions)
+      token_positions.sort! { |a, b| a.pos <=> b.pos }
+      left_bound = token_positions.inject(0) do |left_bound, token_pos| 
+        [token_pos.pos + token_pos.token.length, left_bound].max 
       end
     
       idx, current, result = 0, [], []
@@ -13,24 +13,24 @@ module TraceVisualization
   
         i = 0
         while i < current.size
-          lexeme_pos = current[i]
+          token_pos = current[i]
     
-          if lexeme_pos.pos + lexeme_pos.lexeme.length == pos
-            fl_delete_lexeme = false
+          if token_pos.pos + token_pos.token.length == pos
+            fl_delete_token = false
           
             if current.size == 1
-              result << lexeme_pos
-              fl_delete_lexeme = true
+              result << token_pos
+              fl_delete_token = true
             else
-              if is_longest_lexeme(current, lexeme_pos)
-                result << lexeme_pos
+              if is_longest_token(current, token_pos)
+                result << token_pos
                 current = []
               else
-                fl_delete_lexeme = true
+                fl_delete_token = true
               end
             end
       
-            if fl_delete_lexeme
+            if fl_delete_token
               current.delete_at(i)
               i -= 1
             end      
@@ -39,8 +39,8 @@ module TraceVisualization
           i += 1
         end
 
-        while idx < lexeme_poss.size && lexeme_poss[idx].pos == pos
-          current << lexeme_poss[idx] 
+        while idx < token_positions.size && token_positions[idx].pos == pos
+          current << token_positions[idx] 
           idx += 1
         end
       end
@@ -48,11 +48,11 @@ module TraceVisualization
       result
     end
   
-    def self.is_longest_lexeme(lexeme_poss, lexeme_pos)
+    def self.is_longest_token(token_positions, token_pos)
       result = true
 
-      lexeme_poss.each do |other_lexeme_pos|
-        if lexeme_pos != other_lexeme_pos && lexeme_pos.lexeme.length < other_lexeme_pos.lexeme.length
+      token_positions.each do |other_token_pos|
+        if token_pos != other_token_pos && token_pos.token.length < other_token_pos.token.length
           result = false
           break
         end

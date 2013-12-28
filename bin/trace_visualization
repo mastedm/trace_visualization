@@ -102,21 +102,10 @@ def foo(options)
     exit 0
   end
 
-  rs = nil
-  bm('PSY1') do
-    rs = Repetitions.psy1(mapping, options[:positions_min_size], true)
-  end
+  repetitions = Algorithm.process(mapping, {})
 
-  puts "rs.size = #{rs.size}"
+  RepetitionsScore.fill_score(repetitions, :sort => true, :order => 'desc', :version => 'relative')
 
-  puts "mapping.lines = #{mapping.lines}"
-
-  context = nil
-  bm('Context') do
-    context = Repetitions::Context.new(mapping, rs)
-  end
-
-  # RepetitionsScore.fill_score(rs, :sort => true, :order => 'desc', :version => 'relative')
   # 
   # rs[0 ... options[:out]].each do |r|
   #   puts '---------------------'
@@ -124,16 +113,16 @@ def foo(options)
   #   puts Visualization::ConsoleColorPrint.hl(mapping, r)
   # end
 
-  rs
-end
+  Visualization::ConsoleColorPrint.hl_stdout(mapping, repetitions[0])
 
+  repetitions
+end
 
 def bm(name, &block)
   Benchmark.bm(17) do |x|
     x.report(name, &block)
   end
 end
-
 
 options = parse_options
 rs = foo(options)

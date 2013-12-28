@@ -5,11 +5,13 @@ module TraceVisualization
   module Data
     class Repetition < RepetitionBase
       @@sequence = 0
-  
+
+      attr_reader :id  
+      attr_reader :left_positions, :right_positions
+      
       attr_accessor :score
       attr_accessor :pcount
-      attr_reader :left_positions, :right_positions
-      attr_reader :id
+
       attr_accessor :strict_ids
   
       def to_s
@@ -39,7 +41,8 @@ module TraceVisualization
       end
   
       def ==(other_repetition)
-        @length == other_repetition.length && 
+        other_repetition != nil && 
+          @length == other_repetition.length && 
           @left_positions == other_repetition.left_positions && 
           @right_positions == other_repetition.right_positions
       end

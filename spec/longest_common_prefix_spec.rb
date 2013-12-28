@@ -18,7 +18,7 @@ describe TraceVisualization::LongestCommonPrefix do
       str = "{TOKEN;ip;127.0.0.1;1000;1} foo\r\n{TOKEN;ip;127.0.0.1;1000;1} bar"
 
       mapping = TraceVisualization::Mapping.new
-      mapping.process { from_preprocessed_string(str) }
+      mapping.process { from_string(str) }
       
       sa = TraceVisualization::SuffixArray.effective(mapping)
       lcp = TraceVisualization::LongestCommonPrefix.effective(mapping, sa, mapping.length)

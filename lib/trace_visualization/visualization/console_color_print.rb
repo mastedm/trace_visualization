@@ -29,6 +29,22 @@ module TraceVisualization
     
         result += mapping.restore(prev_position, mapping.length - prev_position)
       end
+      
+      def self.hl_stdout(mapping, repetition)
+        if repetition.instance_of? Array
+          puts "* * * S T A R T * * *"
+          for r in repetition
+            puts r
+            puts hl(mapping, r)
+            puts "- - - - - - - - - - -"
+          end
+        else
+          puts "* * * S T A R T * * *"
+          puts repetition
+          puts hl(mapping, repetition)
+          puts "- - - - - - - - - - -"          
+        end
+      end
     end
   end
 end

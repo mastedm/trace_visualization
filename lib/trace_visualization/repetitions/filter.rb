@@ -6,18 +6,19 @@ module TraceVisualization
     module Filter
 
       # Filter for strict repetitions
-      def self.strict_repetitions_filter(str, rs, concat, options = {})
+      def self.strict_repetitions_filter(str, context, options = {})
         Utils.set_default_options(options, { :positions_min_size => 3 })
     
-        repetitions_filter(str, rs, concat, options)
-        split(str, rs, concat)    
+        repetitions_filter(str, context, options)
+        split(str, context)
+        merge(context)
       end
   
       # Filter repetitions
-      def self.repetitions_filter(str, repetitions, context, options = {})
+      def self.repetitions_filter(str, context, options = {})
         Utils.set_default_options(options, { :positions_min_size => 3 })
     
-        repetitions.delete_if do |repetition| 
+        context.repetitions.delete_if do |repetition| 
           flag = repetition.positions_size < options[:positions_min_size] 
       
           context.delete_repetition(repetition) if flag
@@ -25,22 +26,22 @@ module TraceVisualization
           flag
         end
     
-        fix_boundaries(str, repetitions)
-        delete_duplicates(repetitions, concat)
+        fix_boundaries(str, context.repetitions)
+        delete_duplicates(context)
       end
   
       # Filter repetitions: Boundaries
       # * Change repetitions with '\n' at the beginning or end  
       def self.fix_boundaries(str, rs)
         rs.each do |r|
-          if str[r.get_left_pos(0)] == "\n" && r.length > 1
+          if str[r.get_left_pos(0)].to_str == "\n" && r.length > 1
             for i in 0 ... r.positions_size
               r.set_left_pos(i, r.get_left_pos(i) + 1)
             end
             r.length -= 1
           end
       
-          if str[r.get_left_pos(0) + r.length - 1] == "\n"
+          if str[r.get_left_pos(0) + r.length - 1].to_str == "\n"
             r.length -= 1
           end
         end    
@@ -52,9 +53,9 @@ module TraceVisualization
       #
       # *NB* It has meaning only for the strict repetitions, approximate 
       # repetitions doesn't consist '\n'
-      def self.split(str, rs, context)
+      def self.split(str, context)
         splitted = []
-        rs.delete_if do |r|
+        context.repetitions.delete_if do |r|
           pos = nil
           
           for i in r.get_left_pos(0) ... r.get_left_pos(0) + r.length
@@ -90,7 +91,7 @@ module TraceVisualization
         splitted.delete_if do |r|
           flag = false
 
-          rs.each do |x|
+          context.repetitions.each do |x|
             flag = ((x.left_positions & r.left_positions).size == r.left_positions.size && x.length >= r.length)
             break if flag
           end
@@ -100,18 +101,18 @@ module TraceVisualization
 
         Concatenation.process_new_repetitions(splitted, context)
     
-        rs.concat(splitted)
+        context.repetitions.concat(splitted)
       end
   
       # Filter repetitions: delete duplicate
-      def self.delete_duplicates(repetitions, context)
+      def self.delete_duplicates(context)
         i = 0
-        while i < repetitions.size
+        while i < context.repetitions.size
           j = i + 1
-          while j < repetitions.size
-            if repetitions[i] == repetitions[j]
-              context.delete_repetition(repetitions[j])
-              repetitions.delete_at(j)
+          while j < context.repetitions.size
+            if context.repetitions[i] == context.repetitions[j]
+              context.delete_repetition(context.repetitions[j])
+              context.repetitions.delete_at(j)
             else
               j += 1
             end        
@@ -121,22 +122,22 @@ module TraceVisualization
       end
       
       # Merge repetitions with common positions
-      def self.merge(repetitions, context)
+      def self.merge(context)
         i = 0
-        while i < repetitions.size
+        while i < context.repetitions.size
           j = 0
-          while j < repetitions.size
+          while j < context.repetitions.size
             
             if i != j
-              x, y = repetitions[i], repetitions[j]
+              x, y = context.repetitions[i], context.repetitions[j]
               if x.length == y.length && x.k == y.k
                 common_positions = x.left_positions & y.left_positions
                 if common_positions.size == y.left_positions.size
                   context.delete_repetition(y)
-                  repetitions.delete_at(j) 
+                  context.repetitions.delete_at(j) 
                 elsif common_positions.size > 0
                   context.merge_repetitions(x, y)
-                  repetitions.delete_at(j)
+                  context.repetitions.delete_at(j)
                 end
               end
             end

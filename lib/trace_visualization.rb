@@ -34,7 +34,7 @@ module TraceVisualization
     # Read & mapping file
     mapping = TraceVisualization::Mapping.new
     mapping.process do
-      from_preprocessed_file options[:file_name]
+      from_file options[:file_name]
     end
 
 =begin

@@ -4,9 +4,10 @@ module TraceVisualization
   module Repetitions
     module Concatenation
 
-      def self.process(rs, k, context, options = {})
-        Utils.set_default_options(options, { :positions_min_size => 3 })
-  
+      def self.process(context, options = {})
+        Utils.set_default_options(options, { :positions_min_size => 3, :k => 3 })
+        k = options[:k]
+        
         result = []
   
         useful_cnt = 0
@@ -38,15 +39,13 @@ module TraceVisualization
   
         options[:counter] << [k, useful_cnt] if options[:counter]
   
-        puts "Total: #{rs.size ** 2} #{useful_cnt} #{result.size}"
-  
         process_new_repetitions(result, context)
   
-        rs.concat(result)
+        context.repetitions.concat(result)
       end
 
-      def self.process_new_repetitions(rs, context)
-        context.init_repetitions_by_line(rs)
+      def self.process_new_repetitions(new_repetitions, context)
+        context.init_repetitions_by_line(new_repetitions)
       end
 
       def self.process_full_search(rs, k, context, options = {})
@@ -100,7 +99,7 @@ module TraceVisualization
   
         idx = 0
         while idx < cpr.size
-          xxx = context.data[cpl[idx] + left.length ... cpr[idx]]
+          xxx = context.mapping[cpl[idx] + left.length ... cpr[idx]]
           xxx = xxx.join if xxx.instance_of? Array
           if xxx.scan(TraceVisualization::FORBIDDEN_CHARS).size != 0
             cpr.delete_at(idx)

@@ -3,27 +3,31 @@ require 'trace_visualization/utils'
 module TraceVisualization
   module Repetitions
     class Context
-      attr_accessor :data, :repetitions_by_line
+      attr_accessor :mapping, :repetitions, :repetitions_by_line, :hashes
       
-      def initialize(data, repetitions)
-        @data = data
-        @repetitions_by_line = Array.new(@data.lines.size) { [] }
-    
+      def initialize mapping
+        @mapping = mapping
+        @repetitions_by_line = Array.new(@mapping.lines.size) { [] }
+        @hashes = []
+      end
+      
+      def repetitions=(repetitions)
+        @repetitions = repetitions
         init_repetitions_by_line(repetitions)
       end
       
       def lines
-        @data.lines
+        @mapping.lines
       end
       
-      def init_repetitions_by_line(repetitions)
-        for r in repetitions
+      def init_repetitions_by_line(new_repetitions)
+        for r in new_repetitions
           r_pos = r.left_positions
           r.lines.clear
           i, j = 0, 0
       
-          while (i < @data.lines.size && j < r_pos.size)
-            a, b = @data.lines[i], (i + 1 < @data.lines.size ? @data.lines[i + 1] : 2**32)
+          while (i < @mapping.lines.size && j < r_pos.size)
+            a, b = @mapping.lines[i], (i + 1 < @mapping.lines.size ? @mapping.lines[i + 1] : 2**32)
         
             if a <= r_pos[j] && r_pos[j] < b
               @repetitions_by_line[i] << [r, r_pos[j]]

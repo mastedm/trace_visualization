@@ -12,7 +12,7 @@ describe Mapping do
     mapping = Mapping.new
     
     mapping.process do
-      from_preprocessed_string(str)
+      from_string(str)
     end
     
     mapping.length.should eq 12
@@ -31,7 +31,7 @@ describe Mapping do
     mapping = Mapping.new
     
     mapping.process do
-      from_preprocessed_string(str)
+      from_string(str)
     end
     
     mapping.length.should eq 24
@@ -42,25 +42,25 @@ describe Mapping do
     ips[1].value.should eq("127.0.0.2")
   end
   
-  it 'Lexeme to_i conversion' do
-    lexeme = Data::Lexeme.new('unknown', 0, 0)
-    lexeme.ord = 0
-    lexeme.to_i.should eq 0
+  it 'token to_i conversion' do
+    token = Token.new('unknown', 0, 0)
+    token.ord = 0
+    token.to_i.should eq 0
   end
   
   it 'item as array index' do
-    lexeme = Data::Lexeme.new('unknown', 0, 0)
-    lexeme.ord = 1
+    token = Token.new('unknown', 0, 0)
+    token.ord = 1
     array = [0, 1, 2]
     
-    array[lexeme].should eq 1
+    array[token].should eq 1
   end
 
   it 'preprocessed string' do
     str = 'Text {TOKEN;id;[1234];1234;1} text {TOKEN;ip;127.0.0.127;1;1} text'
     
     mapping = Mapping.new
-    mapping.process { from_preprocessed_string str }
+    mapping.process { from_string str }
     
     mapping.size.should eq 18
   end
@@ -69,7 +69,7 @@ describe Mapping do
     str = "{TOKEN;id;1;1;1}x\n{TOKEN;id;1;1;1}y\n{TOKEN;id;1;1;1}z"
     
     mapping = Mapping.new
-    mapping.process { from_preprocessed_string str }
+    mapping.process { from_string str }
     
     mapping.size.should eq 8
     mapping.lines.should eq [0, 3, 6]    
@@ -86,7 +86,7 @@ DATA
     open(tmp_file.path, "w") { |fd| fd.write data }
     
     mapping = Mapping.new
-    mapping.process { from_preprocessed_file tmp_file.path }
+    mapping.process { from_file tmp_file.path }
 
     tmp_file.close
     tmp_file.unlink
@@ -96,7 +96,7 @@ DATA
   
   it 'subarray method for mapping' do
     mapping = Mapping.new
-    mapping.process { from_preprocessed_string "test test test" }
+    mapping.process { from_string "test test test" }
     
     submapping = mapping[5 ... 9]
     submapping.size.should eq 4
@@ -107,10 +107,10 @@ DATA
   
   it 'forbidden char scan' do
     mapping = Mapping.new
-    mapping.process { from_preprocessed_string "test test test" }
+    mapping.process { from_string "test test test" }
     mapping[0 .. -1].join.scan(TraceVisualization::FORBIDDEN_CHARS).size.should eq 0
     
-    mapping.process { from_preprocessed_string "test\ntest\ntest" }
+    mapping.process { from_string "test\ntest\ntest" }
     mapping[0 .. -1].join.scan(TraceVisualization::FORBIDDEN_CHARS).size.should_not eq 0
   end
 end

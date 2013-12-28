@@ -13,7 +13,7 @@ describe TraceVisualization::SuffixArray do
       str = 'abc{TOKEN;id;[123];123;1}def{TOKEN;id;[456];456;1}ghi'
 
       mapping = TraceVisualization::Mapping.new
-      mapping.process { from_preprocessed_string(str) }
+      mapping.process { from_string(str) }
       
       TraceVisualization::SuffixArray.naive(mapping).should eq([0, 1, 2, 4, 5, 6, 8, 9, 10, 3, 7])
     end
@@ -55,7 +55,7 @@ describe TraceVisualization::SuffixArray do
       str = 'abc{TOKEN;id;[123];123;1}def{TOKEN;id;[456];456;1}ghi'
 
       mapping = TraceVisualization::Mapping.new
-      mapping.process { from_preprocessed_string(str) }
+      mapping.process { from_string(str) }
       
       TraceVisualization::SuffixArray.effective(mapping).should eq([0, 1, 2, 4, 5, 6, 8, 9, 10, 3, 7])
     end
@@ -65,7 +65,7 @@ describe TraceVisualization::SuffixArray do
       
       # 'X a X b'
       mapping = TraceVisualization::Mapping.new
-      mapping.process { from_preprocessed_string(str) }
+      mapping.process { from_string(str) }
 
       mapping[0].to_int.should eq 4
       mapping[1].to_int.should eq 1
@@ -88,7 +88,7 @@ describe TraceVisualization::SuffixArray do
       str = "127.0.0.1 user login\r\n127.0.0.1 user logout"
 
       mapping = TraceVisualization::Mapping.new
-      mapping.process { from_preprocessed_string str }
+      mapping.process { from_string str }
       
       sa = TraceVisualization::SuffixArray.effective(mapping)
     end    

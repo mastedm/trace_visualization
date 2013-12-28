@@ -10,7 +10,7 @@ sergey-macbook loginwindow[4215] <Notice>: USER_PROCESS: 4215 console
 LOG
 
     mapping = TraceVisualization::Mapping.new
-    mapping.process { from_preprocessed_string(data) }
+    mapping.process { from_string(data) }
   
     rs = Repetitions.psy1(mapping, 2, true)
     

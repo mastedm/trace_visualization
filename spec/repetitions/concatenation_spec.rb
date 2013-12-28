@@ -11,9 +11,9 @@ describe Concatenation do
     str = "aaaxbbbyaaazbbbvaaawbbb"
 
     mapping = TraceVisualization::Mapping.new
-    mapping.process { from_preprocessed_string(str) }
+    mapping.process { from_string(str) }
 
-    context = Context.new(mapping, [])
+    context = Context.new(mapping)
     
     lpos = [0, 8, 16]
     rpos = [4, 12, 20]
@@ -38,7 +38,7 @@ bbb
 aaa
 bbb
 EOF
-    context = Context.new(str, [])
+    context = Context.new(str)
       
     lpos, rpos = [0, 8], [4, 12]
     left  = Repetition.new(3, lpos)
@@ -51,7 +51,7 @@ EOF
     
     #
     str.gsub!(TraceVisualization::FORBIDDEN_CHARS, "x")
-    context = Context.new(str, [])
+    context = Context.new(str)
       
     lpos, rpos = [0, 8], [4, 12]
     left  = Repetition.new(3, lpos)
