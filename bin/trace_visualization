@@ -26,6 +26,21 @@ def parse_options
       options[:limit] = n.to_i
     end
 
+    options[:k] = 3
+    opts.on('-k', '--k N', 'k. Default #{options[:k]}') do |n|
+      options[:k] = n.to_i
+    end
+    
+    options[:f] = false
+    opts.on('-f', '--flag t', 'Special flag is used for debug. Default #{options[:f]}') do |str|
+      options[:f] = (str == "t" || str == "true")
+    end
+    
+    options[:log_level] = :error
+    opts.on('-q', '--log_level LEVEL', 'Log level. Default #{options[:log_level]}') do |str|
+      options[:log_level] = str.to_sym
+    end    
+
     options[:out] = 3
     opts.on('-o', '--out N', 'Number of output results') do |n|
       options[:out] = n.to_i
@@ -83,7 +98,9 @@ def foo(options)
   bm('Mapping') do
     mapping = Mapping.new
     mapping.process do
-      from_preprocessed_file(tmp_file.path, options[:offset], options[:limit], !options[:test_preprocessor_performance])
+      case_insensitive
+      
+      from_file(tmp_file.path, options[:offset], options[:limit], !options[:test_preprocessor_performance])
     end
   end
 
@@ -102,7 +119,7 @@ def foo(options)
     exit 0
   end
 
-  repetitions = Algorithm.process(mapping, {})
+  repetitions = Algorithm.process(mapping, options)
 
   RepetitionsScore.fill_score(repetitions, :sort => true, :order => 'desc', :version => 'relative')
 
@@ -113,7 +130,12 @@ def foo(options)
   #   puts Visualization::ConsoleColorPrint.hl(mapping, r)
   # end
 
-  Visualization::ConsoleColorPrint.hl_stdout(mapping, repetitions[0])
+  if repetitions.size > 0
+    puts "repetitions.size = #{repetitions.size}"
+    Visualization::ConsoleColorPrint.hl_stdout(mapping, repetitions[0 ... options[:out]])
+  else
+    puts "empty result"
+  end
 
   repetitions
 end
@@ -125,4 +147,17 @@ def bm(name, &block)
 end
 
 options = parse_options
+options[:counter] = []
+options[:common_positions_counter] = {}
+options[:repetitions_pair_counter] = {}
 rs = foo(options)
+
+puts "==> #{options[:counter]}"
+
+h = options[ :common_positions_counter ]
+total, count = 0, 0
+h.each { |_, value| count += value - 1 ; total += value }
+
+puts "options[ :common_positions_counter ].size = #{h.size}, #{h.find_all { |key, value| value > 1 }.size}"
+puts "options[ :common_positions_counter ] = #{h.values.sort.reverse[0 .. 10]}"
+puts "total = #{total}, count = #{count}"

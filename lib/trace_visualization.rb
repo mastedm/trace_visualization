@@ -3,6 +3,7 @@
   utils
   version
   reorder
+  algorithm
   repetitions
   repetitions_psy
   repetitions/context
