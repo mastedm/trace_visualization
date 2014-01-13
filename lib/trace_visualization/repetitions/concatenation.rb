@@ -5,38 +5,34 @@ module TraceVisualization
     module Concatenation
 
       def self.process(context, options = {})
-        Utils.set_default_options(options, { :positions_min_size => 3, :k => 3 })
-        k = options[:k]
+        Utils.set_default_options(options, { :positions_min_size => 3, :_k => 1 })
+        k = options[:_k]
         
         result = []
   
         useful_cnt = 0
 
-        pairs_cnt = {}
-        context.repetitions_by_line.each do |item|
-          for i in 0 ... item.size
-            for j in i + 1 ... item.size
-              left, right = item[i][0], item[j][0]
-              delta = k - left.k - right.k
+        for left in context.repetitions
+          for right in context.repetitions
+            delta = k - left.k - right.k
 
-              next if not concat_condition(left, right, delta, options[:positions_min_size])
+            next if not concat_condition(left, right, delta, options[:positions_min_size])
+            next if not context.is_unique_strict_ids_set(left, right)
 
-              key = (left.id << 32) + right.id
-              val = (pairs_cnt[key] || 0) + 1
-              pairs_cnt[key] = val
-              next if val != options[:positions_min_size]
+            lps, rps = process_common_positions(left, right, delta, context)
+  
+            if lps.size >= options[:positions_min_size]
+              new_repetition = create_repetition(left, right, delta, lps, rps)
 
-              lps, rps = process_common_positions(left, right, delta, context)
-      
-              if lps.size >= options[:positions_min_size]
-                result << create_repetition(left, right, delta, lps, rps)
-              end
-      
-              useful_cnt += 1        
+              context.add_strict_ids_set(new_repetition.strict_ids)
+              
+              result << new_repetition
             end
+  
+            useful_cnt += 1        
           end
         end
-  
+
         options[:counter] << [k, useful_cnt] if options[:counter]
   
         process_new_repetitions(result, context)
@@ -48,70 +44,48 @@ module TraceVisualization
         context.init_repetitions_by_line(new_repetitions)
       end
 
-      def self.process_full_search(rs, k, context, options = {})
-        opts = {
-          :positions_min_size => 3
-        }.merge options
-  
-        result = []
-  
-        useful_cnt = 0
-
-        for left in rs
-          for right in rs
-            delta = k - left.k - right.k
-            next if not concat_condition(left, right, delta, options[:positions_min_size])
-      
-            # @@processed_path.add(key(left, right, delta))  
-      
-            lps, rps = process_common_positions(left, right, delta, context)
-      
-            if lps.size >= options[:positions_min_size]
-              result << create_repetition(left, right, delta, lps, rps)
-            end
-      
-            useful_cnt += 1
-          end
-        end
-
-        puts "Total: #{rs.size ** 2} #{useful_cnt} #{result.size}"
-  
-        rs.concat(result)
-      end
-
       # Condition for potential concatenation
       def self.concat_condition(left, right, delta, positions_min_size)
-        delta >= 0 && left.id != right.id && 
-          left.positions_size  >= positions_min_size && 
-          right.positions_size >= positions_min_size
+        delta >= 0 && 
+          left.id != right.id &&
+          (left.lines & right.lines).size >= positions_min_size
       end
+      
 
       # *Attention* Position arrays are modified in place which can lead to side 
       # effects. Don't send left == right!
       def self.process_common_positions(left, right, delta, context)
-        lr_pos = left.left_positions
-        lr_pos.collect! { |pos| pos + left.length + delta }
+        result = context.get_processed_common_positions(left, right, delta)
+        
+        until result
+          lr_pos = left.left_positions
+          lr_pos.collect! { |pos| pos + left.length + delta }
 
-        rr_pos = right.left_positions
+          rr_pos = right.left_positions
   
-        cpr = lr_pos & rr_pos
-        cpl = cpr.collect { |pos| pos - left.length - delta }
+          cpr = lr_pos & rr_pos
+          cpl = cpr.collect { |pos| pos - left.length - delta }
   
-        idx = 0
-        while idx < cpr.size
-          xxx = context.mapping[cpl[idx] + left.length ... cpr[idx]]
-          xxx = xxx.join if xxx.instance_of? Array
-          if xxx.scan(TraceVisualization::FORBIDDEN_CHARS).size != 0
-            cpr.delete_at(idx)
-            cpl.delete_at(idx)
-          else
-            idx += 1
+          idx = 0
+          while idx < cpr.size
+            xxx = context.mapping[cpl[idx] + left.length ... cpr[idx]]
+            xxx = xxx.join if xxx.instance_of? Array
+            if xxx.scan(TraceVisualization::FORBIDDEN_CHARS).size != 0
+              cpr.delete_at(idx)
+              cpl.delete_at(idx)
+            else
+              idx += 1
+            end
           end
-        end
 
-        lr_pos.collect! { |lpos| lpos - left.length - delta }
+          lr_pos.collect! { |lpos| lpos - left.length - delta }
+          
+          result = [cpl, cpr]
+          
+          context.add_processed_common_positions(left, right, delta, result)
+        end
       
-        [cpl, cpr]
+        result
       end
 
       # Create repetition

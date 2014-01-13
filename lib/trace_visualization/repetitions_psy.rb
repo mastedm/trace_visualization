@@ -80,7 +80,6 @@ module TraceVisualization
       result.each do |item|
         positions = (item[:i] .. item[:j]).collect { |idx| sa[idx] }
         repetitions << TraceVisualization::Data::Repetition.new(item[:lcp], positions.sort)
-      
       end
       
       repetitions

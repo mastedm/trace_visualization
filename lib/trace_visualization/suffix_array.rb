@@ -154,7 +154,6 @@ module TraceVisualization
       
         k += 1
       end
-    
     end
   
     private

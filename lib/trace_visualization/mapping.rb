@@ -9,12 +9,13 @@ include TraceVisualization
 
 module TraceVisualization
   class Mapping
-    TOKEN_REGEXP = /\{TOKEN;(?<name>[a-zA-Z0-9]+);(?<source>[^;]+);(?<value>[0-9]+);(?<kind>[0-9]+)\}/
+    TOKEN_REGEXP = /\{TOKEN;(?<name>[a-zA-Z0-9]+);(?<source>[^;]+);(?<value>-?[0-9]+);(?<kind>[0-9]+)\}/
     
     def initialize
-      @tokens_map = {}
-      @data       = []
-      @lines      = []
+      @tokens_map  = {}
+      @data        = []
+      @lines       = []
+      @ignore_case = false
     end
     
     def self.init(&block)
@@ -32,6 +33,14 @@ module TraceVisualization
     # Process input data without reorder
     def process_without_reorder(&block)
       instance_eval(&block)
+    end
+
+    def case_sensitive
+      @ignore_case = false
+    end
+    
+    def case_insensitive
+      @ignore_case = true
     end
 
     # Load data from preprocessed file. File is read line by line
@@ -89,7 +98,9 @@ module TraceVisualization
           token = token_positions[idx].token
           idx += 1
         else
-          token = install_token('CHAR', line[pos], line[pos].ord, 1, use_lexeme_table)
+          int_value = (@ignore_case ? line[pos].downcase : line[pos]).ord 
+          
+          token = install_token('CHAR', line[pos], int_value, 1, use_lexeme_table)
         end
         pos += token.token_length
         @data << token

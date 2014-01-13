@@ -5,10 +5,16 @@ module TraceVisualization
     class Context
       attr_accessor :mapping, :repetitions, :repetitions_by_line, :hashes
       
+      # HASH: { :strict_ids_hashcode => [ [], [], ...], ... }
+      # attr_accessor :strict_ids_processed
+      
       def initialize mapping
         @mapping = mapping
         @repetitions_by_line = Array.new(@mapping.lines.size) { [] }
         @hashes = []
+        
+        @strict_ids_processed = {}
+        @processed_common_positions = []
       end
       
       def repetitions=(repetitions)
@@ -64,6 +70,55 @@ module TraceVisualization
             end
           end
         end
+      end
+      
+      def is_unique_strict_ids_set(left, right)
+        cc = left.strict_ids + right.strict_ids
+        
+        @strict_ids_processed[cc.hash].nil? || @strict_ids_processed[cc.hash].index(cc).nil?
+      end
+      
+      def add_strict_ids_set(strict_ids)
+        until @strict_ids_processed[strict_ids.hash]
+          @strict_ids_processed[strict_ids.hash] = []
+        end
+        @strict_ids_processed[strict_ids.hash] << strict_ids
+      end
+      
+      def get_processed_common_positions(left, right, delta)
+        # key = [ left.left_positions, right.left_positions, delta ]
+        # @processed_common_positions[ key ]
+        
+        result = nil
+        
+        # if @processed_common_positions[delta]
+#           if @processed_common_positions[delta][left.length]
+#             if @processed_common_positions[delta][left.length][left.left_positions]
+#               result = @processed_common_positions[delta][left.length][left.left_positions][right.left_positions]
+#             end
+#           end
+#         end
+        
+        result
+      end
+      
+      def add_processed_common_positions(left, right, delta, result)
+        # key = [ left.left_positions, right.left_positions, delta ]
+        # @processed_common_positions[ key ] = result
+        
+        # until @processed_common_positions[delta]
+#           @processed_common_positions[delta] = []
+#         end
+#         
+#         until @processed_common_positions[delta][left.length]
+#           @processed_common_positions[delta][left.length] = {}
+#         end
+#         
+#         until @processed_common_positions[delta][left.length][left.left_positions]
+#           @processed_common_positions[delta][left.length][left.left_positions] = {}
+#         end
+#         
+#         @processed_common_positions[delta][left.length][left.left_positions][right.left_positions] = result
       end
     end
   end

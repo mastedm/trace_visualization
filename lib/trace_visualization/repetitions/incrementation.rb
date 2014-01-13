@@ -44,7 +44,7 @@ module TraceVisualization
         
             unless context.hashes.include? hash
               context.hashes << hash
-              result << create_repetition(core, k, left_positions, right_positions, "right")
+              result << create_repetition(core, k, left_positions, right_positions, :right)
             end
           end
       
@@ -56,7 +56,7 @@ module TraceVisualization
         
             unless context.hashes.include? hash
               context.hashes << hash
-              result << create_repetition(core, k, left_positions, right_positions, "left")
+              result << create_repetition(core, k, left_positions, right_positions, :left)
             end
           end
         end
@@ -71,7 +71,7 @@ module TraceVisualization
 
         fake = fake_repetition(core.class, left_positions, right_positions, type)
 
-        if type == "left"
+        if type == :left
           repetition.left, repetition.right = fake, core
         else
           repetition.left, repetition.right = core, fake
@@ -82,7 +82,7 @@ module TraceVisualization
 
       # Create fake repetition
       def self.fake_repetition(cls, left_positions, right_positions, type)
-        cls.new(0, type == "left" ? left_positions : right_positions)
+        cls.new(0, type == :left ? left_positions : right_positions)
       end
     end
   end

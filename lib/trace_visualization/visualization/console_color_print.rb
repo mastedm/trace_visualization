@@ -9,7 +9,9 @@ module TraceVisualization
       FINISH = "\033[0m"
       
       def self.hl(mapping, repetition)
-        raise 'repetition must be instance of TraceVisualization::Data::Repetition' if not repetition.instance_of? TraceVisualization::Data::Repetition
+        if not repetition.instance_of? TraceVisualization::Data::Repetition
+          raise "repetition must be instance of TraceVisualization::Data::Repetition, actually - #{repetition.class}"
+        end
         
         result = ''
         prev_position = 0
@@ -44,6 +46,12 @@ module TraceVisualization
           puts hl(mapping, repetition)
           puts "- - - - - - - - - - -"          
         end
+      end
+      
+      def self.print_tree(repetition, indent = 0)
+        puts "#{'-' * 4 * indent}> id = #{repetition.id}, k = #{repetition.k}, length = #{repetition.length}"
+        print_tree(repetition.left,  indent + 1) if repetition.left
+        print_tree(repetition.right, indent + 1) if repetition.right
       end
     end
   end

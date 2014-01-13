@@ -1,5 +1,6 @@
 require 'trace_visualization/utils'
 require 'trace_visualization/repetitions/concatenation'
+require 'trace_visualization/visualization/console_color_print'
 
 module TraceVisualization
   module Repetitions
@@ -17,17 +18,48 @@ module TraceVisualization
       # Filter repetitions
       def self.repetitions_filter(str, context, options = {})
         Utils.set_default_options(options, { :positions_min_size => 3 })
-    
+        
+        s0 = context.repetitions.size
+        
+        delete_by_positions_min_size(context, options[:positions_min_size])
+        
+        s1 = context.repetitions.size
+        
+        fix_boundaries(str, context.repetitions)
+        
+        s2 = context.repetitions.size
+        
+        delete_duplicates(context)
+        
+        s3 = context.repetitions.size
+        
+        if options[:log_level] == :info
+          d = s0 - s3
+          
+          if d > 0
+            d1, p1 = s0 - s1, ((s0 - s1) * 100.0 / d).round(2)
+            d2, p2 = s1 - s2, ((s1 - s2) * 100.0 / d).round(2)
+            d3, p3 = s2 - s3, ((s2 - s3) * 100.0 / d).round(2)
+          else
+            d1 = d2 = d3 = p1 = p2 = p3 = 0
+          end
+          
+          puts "#{Time.now} d = #{d}, " + 
+            "delete_by_positions_min_size = #{p1}% (#{d1}), " +
+            "fix_boundaries = #{p2}% (#{d2}), " +
+            "delete_duplicates = #{p3}% (#{d3})"
+        end
+      end
+  
+      # Filter repetitions: Positions min size
+      def self.delete_by_positions_min_size(context, positions_min_size)
         context.repetitions.delete_if do |repetition| 
-          flag = repetition.positions_size < options[:positions_min_size] 
+          flag = repetition.positions_size < positions_min_size 
       
           context.delete_repetition(repetition) if flag
       
           flag
         end
-    
-        fix_boundaries(str, context.repetitions)
-        delete_duplicates(context)
       end
   
       # Filter repetitions: Boundaries
@@ -40,7 +72,7 @@ module TraceVisualization
             end
             r.length -= 1
           end
-      
+
           if str[r.get_left_pos(0) + r.length - 1].to_str == "\n"
             r.length -= 1
           end
@@ -66,10 +98,13 @@ module TraceVisualization
           end
           
           if pos != nil
+            left_part_length = pos - r.get_left_pos(0)
+            right_part_length = r.length - left_part_length - 1
+            
             # right part of split
-            if r.length - pos - 1 >= 2
-              length = r.length - pos - 1
-              positions = (0 ... r.positions_size).collect { |i| r.get_left_pos(i) + pos + 1}
+            if right_part_length >= 2
+              length = right_part_length
+              positions = (0 ... r.positions_size).collect { |i| r.get_left_pos(i) + left_part_length + 1 }
           
               nr = r.class.new(length, positions)
           
@@ -77,8 +112,8 @@ module TraceVisualization
             end
         
             # left part of split
-            if pos >= 2
-              r.length = pos
+            if left_part_length >= 2
+              r.length = left_part_length
               splitted << r
             end
           end
@@ -100,25 +135,47 @@ module TraceVisualization
         end
 
         Concatenation.process_new_repetitions(splitted, context)
-    
         context.repetitions.concat(splitted)
       end
   
       # Filter repetitions: delete duplicate
       def self.delete_duplicates(context)
-        i = 0
-        while i < context.repetitions.size
-          j = i + 1
-          while j < context.repetitions.size
-            if context.repetitions[i] == context.repetitions[j]
-              context.delete_repetition(context.repetitions[j])
-              context.repetitions.delete_at(j)
-            else
-              j += 1
-            end        
+        table, result = {}, []
+          
+        for repetition in context.repetitions
+          until table[repetition.length]
+            table[repetition.length] = {}
           end
-          i += 1
+          
+          until table[repetition.length][repetition.left_positions.size]
+            table[repetition.length][repetition.left_positions.size] = {}
+          end
+          
+          until table[repetition.length][repetition.left_positions.size][repetition.k]
+            table[repetition.length][repetition.left_positions.size][repetition.k] = []
+          end
+          
+          if table[repetition.length][repetition.left_positions.size][repetition.k].find{ |r| r == repetition }.nil?
+            table[repetition.length][repetition.left_positions.size][repetition.k] << repetition
+            result << repetition
+          else
+            original = table[repetition.length][repetition.left_positions.size][repetition.k].find{ |r| r == repetition }
+
+            # puts ">>>>>>>>>>"
+            # puts "Delete repetition"
+            # TraceVisualization::Visualization::ConsoleColorPrint.print_tree(repetition)
+            # 
+            # puts "Original"
+            # TraceVisualization::Visualization::ConsoleColorPrint.print_tree(original)
+            # 
+            # TraceVisualization::Visualization::ConsoleColorPrint.hl_stdout(context.mapping, repetition)
+            # TraceVisualization::Visualization::ConsoleColorPrint.hl_stdout(context.mapping, original)
+            
+            context.delete_repetition(repetition)
+          end
         end
+        
+        context.repetitions.replace(result)
       end
       
       # Merge repetitions with common positions

@@ -22,6 +22,10 @@ module TraceVisualization
         @ord <=> anOther.ord
       end
       
+      def ==(anOther)
+        !anOther.nil? && @ord == anOther.ord
+      end
+      
       def <(other)
         @ord < other.ord
       end
